@@ -1,0 +1,25 @@
+[project]
+name = "dash-robot"
+version = "0.1.0"
+description = "Vibe-coded Python controller for Wonder Workshop's Dash robot over BLE"
+requires-python = ">=3.13"
+dependencies = [
+    "bleak>=0.22",
+    "colour>=0.1.5",
+]
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ty.environment]
+python-version = "3.13"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15",
+    "ty>=0.0.21",
+]

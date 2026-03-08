@@ -1,0 +1,10 @@
+.env
+.envrc
+*.log
+__pycache__/
+.venv/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.DS_Store

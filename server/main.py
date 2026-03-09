@@ -340,17 +340,25 @@ to do something physical.\
 )
 
 
+def _strip_json_comments(text: str) -> str:
+    """Remove // comments from JSON-like text."""
+    return re.sub(r"\s*//[^\n]*", "", text)
+
+
 def _parse_command_blocks(text: str) -> list[dict]:
     """Extract command JSON arrays from ```commands ... ``` blocks."""
-    commands = []
+    commands: list[dict] = []
     pattern = r"```commands\s*\n(.*?)```"
     for match in re.finditer(pattern, text, re.DOTALL):
+        raw = _strip_json_comments(match.group(1))
         try:
-            parsed = json.loads(match.group(1))
+            parsed = json.loads(raw)
             if isinstance(parsed, list):
-                commands.extend(parsed)
+                for cmd in parsed:
+                    if isinstance(cmd, dict) and "command" in cmd:
+                        commands.append(cmd)
         except json.JSONDecodeError:
-            log.warning("Failed to parse command block: %s", match.group(1))
+            log.warning("Failed to parse command block: %s", raw)
     return commands
 
 

@@ -6,7 +6,7 @@ from collections import defaultdict
 from bleak import BleakClient, BleakScanner
 from colour import Color
 
-from dash_robot.constants import COMMAND_CHAR_UUID, COMMANDS, NOISES
+from dash_robot.constants import COMMAND_CHAR_UUID, COMMANDS, NOISES, ROBOT_SERVICE_UUID
 from dash_robot.sensors import Sensors
 
 log = logging.getLogger(__name__)
@@ -38,12 +38,11 @@ def _angle_byte(angle: int) -> bytearray:
 
 
 async def discover(timeout: float = 5.0) -> str | None:
-    """Scan for a Dash robot and return its BLE address."""
-    devices = await BleakScanner.discover(timeout=timeout)
+    """Scan for a Dash/Dot robot by service UUID and return its BLE address."""
+    devices = await BleakScanner.discover(timeout=timeout, service_uuids=[str(ROBOT_SERVICE_UUID)])
     for d in devices:
-        if d.name and "dash" in d.name.lower():
-            log.info("Found Dash at %s (%s)", d.address, d.name)
-            return d.address
+        log.info("Found robot at %s (%s)", d.address, d.name or "unnamed")
+        return d.address
     return None
 
 

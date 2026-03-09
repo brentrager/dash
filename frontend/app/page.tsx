@@ -227,29 +227,35 @@ export default function Dashboard() {
     return () => socket.close();
   }, []);
 
-  // --- Arrow key movement ---
+  // --- Arrow key movement (hold to drive, release to stop) ---
   useEffect(() => {
+    const activeKeys = new Set<string>();
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if user is typing in an input/textarea
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.repeat) return; // ignore held-down repeats
 
       switch (e.key) {
         case "ArrowUp":
           e.preventDefault();
-          safeCall(() => api.move(distanceMm, speed));
+          activeKeys.add(e.key);
+          safeCall(() => api.drive(speed));
           break;
         case "ArrowDown":
           e.preventDefault();
-          safeCall(() => api.move(-distanceMm, speed));
+          activeKeys.add(e.key);
+          safeCall(() => api.drive(-speed));
           break;
         case "ArrowLeft":
           e.preventDefault();
-          safeCall(() => api.turn(-turnDeg));
+          activeKeys.add(e.key);
+          safeCall(() => api.spin(-speed));
           break;
         case "ArrowRight":
           e.preventDefault();
-          safeCall(() => api.turn(turnDeg));
+          activeKeys.add(e.key);
+          safeCall(() => api.spin(speed));
           break;
         case " ":
           e.preventDefault();
@@ -257,9 +263,23 @@ export default function Dashboard() {
           break;
       }
     };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (!activeKeys.has(e.key)) return;
+      activeKeys.delete(e.key);
+      // Stop when all arrow keys released
+      if (activeKeys.size === 0) {
+        safeCall(() => api.stop());
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [distanceMm, speed, turnDeg, safeCall]);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [speed, safeCall]);
 
   // --- Auto-scroll chat ---
   useEffect(() => {

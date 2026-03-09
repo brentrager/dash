@@ -242,12 +242,12 @@ export default function Dashboard() {
         case "ArrowUp":
           e.preventDefault();
           activeKeys.add(e.key);
-          safeCall(() => api.drive(-DRIVE_SPEED));
+          safeCall(() => api.drive(DRIVE_SPEED));
           break;
         case "ArrowDown":
           e.preventDefault();
           activeKeys.add(e.key);
-          safeCall(() => api.drive(DRIVE_SPEED));
+          safeCall(() => api.drive(-DRIVE_SPEED));
           break;
         case "ArrowLeft":
           e.preventDefault();

@@ -140,6 +140,8 @@ export default function Dashboard() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // --- Helpers ---
   const showToast = useCallback(
@@ -370,6 +372,46 @@ export default function Dashboard() {
     }
     setChatLoading(false);
   };
+
+  const toggleMic = useCallback(() => {
+    if (listening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setListening(false);
+      return;
+    }
+
+    const SR =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      showToast("Speech recognition not supported in this browser");
+      return;
+    }
+
+    const recognition = new SR();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+    recognitionRef.current = recognition;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0]?.[0]?.transcript ?? "";
+      if (transcript.trim()) {
+        setChatInput(transcript.trim());
+      }
+      setListening(false);
+    };
+
+    recognition.onerror = () => {
+      setListening(false);
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+    };
+
+    recognition.start();
+    setListening(true);
+  }, [listening, showToast]);
 
   // --- Sound categories ---
   const soundCategories = sounds.reduce<Record<string, api.SoundInfo[]>>(
@@ -777,6 +819,17 @@ export default function Dashboard() {
             placeholder="Tell Dash what to do..."
             className="flex-1 bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-neon-yellow transition-colors"
           />
+          <button
+            onClick={toggleMic}
+            className={`neon-btn px-3 py-2.5 rounded-xl text-sm font-bold border ${
+              listening
+                ? "bg-red-900/60 text-red-300 border-red-600 animate-pulse"
+                : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:text-neon-yellow hover:border-yellow-700"
+            }`}
+            title={listening ? "Stop listening" : "Voice input"}
+          >
+            {listening ? "..." : "Mic"}
+          </button>
           <button
             onClick={handleChat}
             disabled={chatLoading || !chatInput.trim()}

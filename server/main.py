@@ -67,17 +67,24 @@ def _init_mock_state():
 PROX_THRESHOLD = 100  # proximity value that triggers avoidance
 collision_avoidance_enabled = True
 _avoidance_task: asyncio.Task | None = None
+_last_avoidance: float = 0
 
 
 async def _collision_avoidance_loop():
     """Background loop: stop robot if proximity sensors detect obstacle."""
+    global _last_avoidance
     while True:
         await asyncio.sleep(0.15)
         if not collision_avoidance_enabled or robot is None:
             continue
         if not _is_connected():
             continue
+        now = time.time()
+        if now - _last_avoidance < 3:
+            continue
         state = robot.state
+        if not state.get("moving", False):
+            continue
         prox_l = state.get("prox_left", 0)
         prox_r = state.get("prox_right", 0)
         if not isinstance(prox_l, (int, float)):
@@ -85,6 +92,7 @@ async def _collision_avoidance_loop():
         if not isinstance(prox_r, (int, float)):
             continue
         if prox_l > PROX_THRESHOLD or prox_r > PROX_THRESHOLD:
+            _last_avoidance = now
             log.warning(
                 "Obstacle detected (L=%s R=%s) — auto-stopping",
                 prox_l,

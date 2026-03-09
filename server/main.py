@@ -62,15 +62,54 @@ def _init_mock_state():
     )
 
 
+# ── Collision avoidance ──────────────────────────────────────────────────────
+
+PROX_THRESHOLD = 100  # proximity value that triggers avoidance
+collision_avoidance_enabled = True
+_avoidance_task: asyncio.Task | None = None
+
+
+async def _collision_avoidance_loop():
+    """Background loop: stop robot if proximity sensors detect obstacle."""
+    while True:
+        await asyncio.sleep(0.15)
+        if not collision_avoidance_enabled or robot is None:
+            continue
+        if not _is_connected():
+            continue
+        state = robot.state
+        prox_l = state.get("prox_left", 0)
+        prox_r = state.get("prox_right", 0)
+        if not isinstance(prox_l, (int, float)):
+            continue
+        if not isinstance(prox_r, (int, float)):
+            continue
+        if prox_l > PROX_THRESHOLD or prox_r > PROX_THRESHOLD:
+            log.warning(
+                "Obstacle detected (L=%s R=%s) — auto-stopping",
+                prox_l,
+                prox_r,
+            )
+            try:
+                await robot.stop()
+                await robot.say("ohno")
+            except Exception:
+                pass
+
+
 # ── Lifespan ─────────────────────────────────────────────────────────────────
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _avoidance_task
     if NO_ROBOT:
         _init_mock_state()
         log.info("Running in NO_ROBOT mode — mock data enabled")
+    _avoidance_task = asyncio.create_task(_collision_avoidance_loop())
     yield
+    if _avoidance_task:
+        _avoidance_task.cancel()
     global robot
     if robot is not None:
         await robot.disconnect()

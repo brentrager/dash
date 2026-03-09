@@ -2,14 +2,12 @@
   "name": "dash-robot",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n api,web -c cyan,magenta \"pnpm run dev:api\" \"pnpm run dev:web\"",
+    "dev": "./dev.sh",
     "dev:api": "uv run uvicorn server.main:app --reload --port 8543",
     "dev:api:mock": "NO_ROBOT=1 uv run uvicorn server.main:app --reload --port 8543",
     "dev:web": "cd frontend && pnpm dev",
-    "dev:mock": "concurrently -n api,web -c cyan,magenta \"pnpm run dev:api:mock\" \"pnpm run dev:web\"",
+    "dev:mock": "./dev.sh --mock",
     "check": "uv run ruff format --check . && uv run ruff check . && uv run ty check && cd frontend && pnpm check"
   },
-  "devDependencies": {
-    "concurrently": "^9"
-  }
+  "devDependencies": {}
 }

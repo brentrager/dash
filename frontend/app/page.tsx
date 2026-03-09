@@ -229,8 +229,6 @@ export default function Dashboard() {
 
   // --- Arrow key movement (hold to drive, release to stop) ---
   useEffect(() => {
-    const activeKeys = new Set<string>();
-
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;

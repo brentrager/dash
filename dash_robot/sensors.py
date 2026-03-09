@@ -38,7 +38,7 @@ class Sensors:
         await self.client.stop_notify(DOT_SENSOR_CHAR_UUID)
         await self.client.stop_notify(DASH_SENSOR_CHAR_UUID)
 
-    def _decode_dot(self, _handle: int, value: bytearray):
+    def _decode_dot(self, _handle: object, value: bytearray) -> None:
         self.dot_ready = True
         s = self.state
         s["time"] = time.time()
@@ -58,7 +58,7 @@ class Sensors:
         if value[15] == 4:
             s["sound_direction"] = value[13] << 8 | value[12]
 
-    def _decode_dash(self, _handle: int, value: bytearray):
+    def _decode_dash(self, _handle: object, value: bytearray) -> None:
         self.dash_ready = True
         s = self.state
         s["dash_time"] = time.time()

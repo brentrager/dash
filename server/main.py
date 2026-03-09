@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import time
-from collections import defaultdict
 from contextlib import asynccontextmanager
 
 import httpx
@@ -28,7 +27,7 @@ LLM_MODEL = os.environ.get("LLM_MODEL", "llama-3.1-8b-instant")
 # ── Global state ─────────────────────────────────────────────────────────────
 
 robot: DashRobot | None = None
-mock_state: defaultdict[str, int | float | bool] = defaultdict(int)
+mock_state: dict[str, object] = {}
 
 
 def _init_mock_state():
@@ -82,7 +81,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Dash Robot Server", lifespan=lifespan)
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware,  # type: ignore[arg-type]
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -209,7 +208,7 @@ async def connect_robot():
     if NO_ROBOT:
         return {"status": "connected", "message": "Mock mode — no real robot"}
 
-    if _is_connected():
+    if _is_connected() and robot is not None:
         return {"status": "already_connected", "address": robot.address}
 
     address = await discover(timeout=5.0)

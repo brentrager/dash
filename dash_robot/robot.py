@@ -221,7 +221,7 @@ class DashRobot:
     # ── Sensor shortcuts ────────────────────────────────────────
 
     @property
-    def proximity(self) -> dict[str, int]:
+    def proximity(self) -> dict[str, int | float]:
         return {
             "left": self.state["prox_left"],
             "right": self.state["prox_right"],

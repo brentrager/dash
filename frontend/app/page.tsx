@@ -227,51 +227,46 @@ export default function Dashboard() {
     return () => socket.close();
   }, []);
 
-  // --- Arrow key movement (hold to drive/spin, release to stop) ---
+  // --- Arrow key movement (combos supported, e.g. Up+Right = arc) ---
   useEffect(() => {
     const activeKeys = new Set<string>();
-    const DRIVE_SPEED = 200;
-    const SPIN_SPEED = 200;
+    const SPEED = 200;
+    const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+
+    function sendMotion() {
+      let linear = 0;
+      let rotational = 0;
+      if (activeKeys.has("ArrowUp")) linear += SPEED;
+      if (activeKeys.has("ArrowDown")) linear -= SPEED;
+      if (activeKeys.has("ArrowLeft")) rotational += SPEED;
+      if (activeKeys.has("ArrowRight")) rotational -= SPEED;
+
+      if (linear === 0 && rotational === 0) {
+        safeCall(() => api.stop());
+      } else {
+        safeCall(() => api.driveAndSpin(linear, rotational));
+      }
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (e.repeat) return;
 
-      switch (e.key) {
-        case "ArrowUp":
-          e.preventDefault();
-          activeKeys.add(e.key);
-          safeCall(() => api.drive(DRIVE_SPEED));
-          break;
-        case "ArrowDown":
-          e.preventDefault();
-          activeKeys.add(e.key);
-          safeCall(() => api.drive(-DRIVE_SPEED));
-          break;
-        case "ArrowLeft":
-          e.preventDefault();
-          activeKeys.add(e.key);
-          safeCall(() => api.spin(SPIN_SPEED));
-          break;
-        case "ArrowRight":
-          e.preventDefault();
-          activeKeys.add(e.key);
-          safeCall(() => api.spin(-SPIN_SPEED));
-          break;
-        case " ":
-          e.preventDefault();
-          safeCall(() => api.stop());
-          break;
+      if (arrows.includes(e.key)) {
+        e.preventDefault();
+        activeKeys.add(e.key);
+        sendMotion();
+      } else if (e.key === " ") {
+        e.preventDefault();
+        safeCall(() => api.stop());
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (!activeKeys.has(e.key)) return;
       activeKeys.delete(e.key);
-      if (activeKeys.size === 0) {
-        safeCall(() => api.stop());
-      }
+      sendMotion();
     };
 
     window.addEventListener("keydown", handleKeyDown);

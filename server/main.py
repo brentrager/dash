@@ -138,6 +138,8 @@ async def _execute_command(cmd: str, args: dict) -> str:
                 await robot.drive(args.get("speed", 100))
             case "spin":
                 await robot.spin(args.get("speed", 200))
+            case "drive_and_spin":
+                await robot.drive_and_spin(args.get("linear", 0), args.get("rotational", 0))
             case "move":
                 await robot.move(
                     args.get("distance_mm", 100),

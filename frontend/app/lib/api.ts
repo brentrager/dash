@@ -68,6 +68,10 @@ export async function stop() {
   return command("stop");
 }
 
+export async function driveAndSpin(linear: number, rotational: number) {
+  return command("drive_and_spin", { linear, rotational });
+}
+
 // --- Lights ---
 
 export async function setNeckColor(r: number, g: number, b: number) {

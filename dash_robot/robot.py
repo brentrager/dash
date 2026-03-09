@@ -158,19 +158,29 @@ class DashRobot:
 
     # ── Movement ────────────────────────────────────────────────
 
-    async def drive(self, speed: int):
-        """Drive forward (positive) or backward (negative). Range: -2048 to 2048."""
+    @staticmethod
+    def _encode_speed(speed: int) -> int:
         speed = max(-2048, min(2048, speed))
         if speed < 0:
             speed = 0x800 + speed  # two's complement 12-bit
-        await self._cmd("drive", bytearray([speed & 0xFF, 0x00, (speed & 0x0F00) >> 8]))
+        return speed
+
+    async def drive(self, speed: int):
+        """Drive forward (positive) or backward (negative). Range: -2048 to 2048."""
+        await self.drive_and_spin(linear=speed, rotational=0)
 
     async def spin(self, speed: int):
         """Spin in place. Positive = clockwise, negative = counter-clockwise."""
-        speed = max(-2048, min(2048, speed))
-        if speed < 0:
-            speed = 0x800 + speed  # two's complement 12-bit
-        await self._cmd("drive", bytearray([0x00, speed & 0xFF, (speed & 0xFF00) >> 5]))
+        await self.drive_and_spin(linear=0, rotational=speed)
+
+    async def drive_and_spin(self, linear: int = 0, rotational: int = 0):
+        """Drive and spin simultaneously."""
+        lin = self._encode_speed(linear)
+        rot = self._encode_speed(rotational)
+        await self._cmd(
+            "drive",
+            bytearray([lin & 0xFF, rot & 0xFF, ((lin & 0x0F00) >> 8) | ((rot & 0xFF00) >> 5)]),
+        )
 
     async def stop(self):
         """Stop all movement."""

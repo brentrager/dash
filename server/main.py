@@ -273,8 +273,7 @@ async def websocket_sensor_stream(ws: WebSocket):
 
 # ── LLM Chat endpoint ───────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = (
-    """\
+SYSTEM_PROMPT = """\
 You are Dash, a friendly robot assistant made by Wonder Workshop. You control a \
 physical Dash robot via commands. When the user asks you to do something physical, \
 include the commands in your response inside a fenced code block with the language \
@@ -322,9 +321,20 @@ Sound:
 Reset:
 - reset: {mode?: int} — reset the robot (default mode 4)
 
-Available sounds: """
-    + ", ".join(sorted(NOISES.keys()))
-    + """
+Available sounds (ONLY use these exact names):
+- Voices: hi, bye, okay, huh, confused, ohno, ayayay, bragging, \
+yawn, wee, tada, charge
+- Animals: cat, dog, lion, elephant, horse, goat, croc, dino
+- Vehicles: siren (police/emergency), horn (car), engine, tires, \
+helicopter, jet (airplane), boat, train
+- Effects: beep, laser (sci-fi), gobble (turkey), buzz, squeek
+
+Pick sounds that match the mood! Examples:
+- Police/emergency -> siren + red/blue lights
+- Excited/celebrating -> tada or wee
+- Scared/surprised -> ohno or ayayay
+- Animals/nature -> cat, dog, elephant etc
+- Space/sci-fi -> laser + drive_and_spin
 
 Example response when asked to "drive in a circle":
 
@@ -351,11 +361,15 @@ Example response when asked to "dance":
 ]
 ```
 
-Always be playful and enthusiastic. If the user just wants to chat, respond \
-normally without commands. Only include commands when the user wants the robot \
-to do something physical.\
+CRITICAL: You MUST put commands inside ```commands blocks. \
+No other format works. Always include commands when the user \
+wants anything physical.
+
+Be playful and enthusiastic. You LOVE to move! Any excuse to \
+drive, spin, or do an arc is a good one. When in doubt, move. \
+Combine movement with lights and sounds for maximum fun. \
+Keep responses short — 1-2 sentences max, then commands.\
 """
-)
 
 
 def _strip_json_comments(text: str) -> str:
@@ -364,9 +378,10 @@ def _strip_json_comments(text: str) -> str:
 
 
 def _parse_command_blocks(text: str) -> list[dict]:
-    """Extract command JSON arrays from ```commands ... ``` blocks."""
+    """Extract command JSON arrays from fenced code blocks."""
     commands: list[dict] = []
-    pattern = r"```commands\s*\n(.*?)```"
+    # Match ```commands, ```json, or bare ``` blocks
+    pattern = r"```(?:commands|json)?\s*\n(.*?)```"
     for match in re.finditer(pattern, text, re.DOTALL):
         raw = _strip_json_comments(match.group(1))
         try:
@@ -375,8 +390,24 @@ def _parse_command_blocks(text: str) -> list[dict]:
                 for cmd in parsed:
                     if isinstance(cmd, dict) and "command" in cmd:
                         commands.append(cmd)
+            elif isinstance(parsed, dict) and "command" in parsed:
+                commands.append(parsed)
         except json.JSONDecodeError:
             log.warning("Failed to parse command block: %s", raw)
+
+    # Fallback: try to find a bare JSON array in the text
+    if not commands:
+        for match in re.finditer(r'\[\s*\{[^}]*"command"[^]]*\]', text, re.DOTALL):
+            raw = _strip_json_comments(match.group(0))
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    for cmd in parsed:
+                        if isinstance(cmd, dict) and "command" in cmd:
+                            commands.append(cmd)
+            except json.JSONDecodeError:
+                pass
+
     return commands
 
 

@@ -227,55 +227,49 @@ export default function Dashboard() {
     return () => socket.close();
   }, []);
 
-  // --- Arrow key movement (hold to repeat, release to stop) ---
+  // --- Arrow key movement (hold to drive/spin, release to stop) ---
   useEffect(() => {
-    const intervals = new Map<string, ReturnType<typeof setInterval>>();
-    const REPEAT_MS = 300;
-    const MOVE_STEP = 50; // mm per tick
-    const TURN_STEP = 20; // degrees per tick
-
-    function fire(key: string) {
-      switch (key) {
-        case "ArrowUp":
-          safeCall(() => api.move(MOVE_STEP, speed));
-          break;
-        case "ArrowDown":
-          safeCall(() => api.move(-MOVE_STEP, speed));
-          break;
-        case "ArrowLeft":
-          safeCall(() => api.turn(-TURN_STEP));
-          break;
-        case "ArrowRight":
-          safeCall(() => api.turn(TURN_STEP));
-          break;
-      }
-    }
+    const activeKeys = new Set<string>();
+    const DRIVE_SPEED = 200;
+    const SPIN_SPEED = 200;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (e.repeat) return;
 
-      const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
-      if (arrows.includes(e.key)) {
-        e.preventDefault();
-        if (intervals.has(e.key)) return; // already held
-        fire(e.key); // immediate first action
-        intervals.set(e.key, setInterval(() => fire(e.key), REPEAT_MS));
-      } else if (e.key === " ") {
-        e.preventDefault();
-        safeCall(() => api.stop());
+      switch (e.key) {
+        case "ArrowUp":
+          e.preventDefault();
+          activeKeys.add(e.key);
+          safeCall(() => api.drive(-DRIVE_SPEED));
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          activeKeys.add(e.key);
+          safeCall(() => api.drive(DRIVE_SPEED));
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          activeKeys.add(e.key);
+          safeCall(() => api.spin(-SPIN_SPEED));
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          activeKeys.add(e.key);
+          safeCall(() => api.spin(SPIN_SPEED));
+          break;
+        case " ":
+          e.preventDefault();
+          safeCall(() => api.stop());
+          break;
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      const interval = intervals.get(e.key);
-      if (interval) {
-        clearInterval(interval);
-        intervals.delete(e.key);
-      }
-      // Stop when all arrows released
-      if (intervals.size === 0 && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+      if (!activeKeys.has(e.key)) return;
+      activeKeys.delete(e.key);
+      if (activeKeys.size === 0) {
         safeCall(() => api.stop());
       }
     };
@@ -285,9 +279,8 @@ export default function Dashboard() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      intervals.forEach((i) => clearInterval(i));
     };
-  }, [speed, safeCall]);
+  }, [safeCall]);
 
   // --- Auto-scroll chat ---
   useEffect(() => {

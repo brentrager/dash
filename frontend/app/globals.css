@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --neon-cyan: #00ffff;
+  --neon-magenta: #ff00ff;
+  --neon-lime: #00ff00;
+  --neon-yellow: #ffff00;
+  --neon-orange: #ff8800;
+  --card-bg: #111111;
+  --card-border: #222222;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-neon-cyan: var(--neon-cyan);
+  --color-neon-magenta: var(--neon-magenta);
+  --color-neon-lime: var(--neon-lime);
+  --color-neon-yellow: var(--neon-yellow);
+  --color-neon-orange: var(--neon-orange);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Pulsing connection dot */
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 4px #00ff00, 0 0 8px #00ff00; }
+  50% { box-shadow: 0 0 8px #00ff00, 0 0 20px #00ff00; }
+}
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 4px #ff3333, 0 0 8px #ff3333; }
+  50% { box-shadow: 0 0 8px #ff3333, 0 0 20px #ff3333; }
+}
+.pulse-green {
+  animation: pulse-green 2s ease-in-out infinite;
+}
+.pulse-red {
+  animation: pulse-red 2s ease-in-out infinite;
+}
+
+/* Neon glow on hover */
+.neon-btn {
+  transition: all 0.2s ease;
+}
+.neon-btn:hover {
+  box-shadow: 0 0 12px currentColor, 0 0 24px currentColor;
+  transform: scale(1.02);
+}
+.neon-btn:active {
+  transform: scale(0.97);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #111;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+/* Color picker override */
+input[type="color"] {
+  -webkit-appearance: none;
+  border: 2px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+/* Range slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+input[type="range"]::-webkit-slider-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #333;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  margin-top: -6px;
+  box-shadow: 0 0 6px var(--neon-cyan);
+}

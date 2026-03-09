@@ -97,19 +97,81 @@ async def _collision_avoidance_loop():
                 pass
 
 
+# ── Clap detection / Terminator mode ────────────────────────────────────────
+
+_clap_task: asyncio.Task | None = None
+_last_clap: float = 0
+
+
+async def _terminator_sequence():
+    """Go full terminator: red lights, laser sounds, menacing spin."""
+    assert robot is not None
+    try:
+        await robot.all_lights("red", 255)
+        await robot.say("laser")
+        await asyncio.sleep(0.3)
+        await robot.spin(300)
+        await asyncio.sleep(0.5)
+        await robot.stop()
+        await robot.say("laser")
+        await asyncio.sleep(0.3)
+        await robot.spin(-300)
+        await asyncio.sleep(0.5)
+        await robot.stop()
+        await robot.head_yaw(-40)
+        await robot.say("laser")
+        await asyncio.sleep(0.3)
+        await robot.head_yaw(40)
+        await robot.say("laser")
+        await asyncio.sleep(0.3)
+        await robot.head_yaw(0)
+        await robot.all_lights("red", 100)
+        await asyncio.sleep(0.5)
+        await robot.all_lights("red", 255)
+        await asyncio.sleep(0.2)
+        await robot.all_lights("red", 50)
+        await asyncio.sleep(0.2)
+        await robot.all_lights("red", 255)
+        await robot.say("bragging")
+        await asyncio.sleep(1)
+        # Return to normal
+        await robot.all_lights("white", 100)
+    except Exception:
+        pass
+
+
+async def _clap_detection_loop():
+    """Background loop: detect claps and trigger terminator mode."""
+    global _last_clap
+    while True:
+        await asyncio.sleep(0.2)
+        if robot is None or not _is_connected():
+            continue
+        state = robot.state
+        clap = state.get("clap", False)
+        now = time.time()
+        if clap and (now - _last_clap) > 5:
+            _last_clap = now
+            log.info("Clap detected — TERMINATOR MODE")
+            await _terminator_sequence()
+
+
 # ── Lifespan ─────────────────────────────────────────────────────────────────
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _avoidance_task
+    global _avoidance_task, _clap_task
     if NO_ROBOT:
         _init_mock_state()
         log.info("Running in NO_ROBOT mode — mock data enabled")
     _avoidance_task = asyncio.create_task(_collision_avoidance_loop())
+    _clap_task = asyncio.create_task(_clap_detection_loop())
     yield
     if _avoidance_task:
         _avoidance_task.cancel()
+    if _clap_task:
+        _clap_task.cancel()
     global robot
     if robot is not None:
         await robot.disconnect()

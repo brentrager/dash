@@ -243,6 +243,9 @@ export default function Dashboard() {
       if (activeKeys.has("ArrowLeft")) rotational += SPEED;
       if (activeKeys.has("ArrowRight")) rotational -= SPEED;
 
+      // Flip turn direction when reversing (like steering a car)
+      if (linear < 0) rotational = -rotational;
+
       if (linear === 0 && rotational === 0) {
         safeCall(() => api.stop());
       } else {

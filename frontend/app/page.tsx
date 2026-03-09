@@ -227,6 +227,40 @@ export default function Dashboard() {
     return () => socket.close();
   }, []);
 
+  // --- Arrow key movement ---
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      switch (e.key) {
+        case "ArrowUp":
+          e.preventDefault();
+          safeCall(() => api.move(distanceMm, speed));
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          safeCall(() => api.move(-distanceMm, speed));
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          safeCall(() => api.turn(-turnDeg));
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          safeCall(() => api.turn(turnDeg));
+          break;
+        case " ":
+          e.preventDefault();
+          safeCall(() => api.stop());
+          break;
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [distanceMm, speed, turnDeg, safeCall]);
+
   // --- Auto-scroll chat ---
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

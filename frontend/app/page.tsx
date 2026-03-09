@@ -239,23 +239,19 @@ export default function Dashboard() {
       switch (e.key) {
         case "ArrowUp":
           e.preventDefault();
-          activeKeys.add(e.key);
-          safeCall(() => api.drive(-speed));
+          safeCall(() => api.move(distanceMm, speed));
           break;
         case "ArrowDown":
           e.preventDefault();
-          activeKeys.add(e.key);
-          safeCall(() => api.drive(speed));
+          safeCall(() => api.move(-distanceMm, speed));
           break;
         case "ArrowLeft":
           e.preventDefault();
-          activeKeys.add(e.key);
-          safeCall(() => api.spin(speed));
+          safeCall(() => api.turn(-turnDeg));
           break;
         case "ArrowRight":
           e.preventDefault();
-          activeKeys.add(e.key);
-          safeCall(() => api.spin(-speed));
+          safeCall(() => api.turn(turnDeg));
           break;
         case " ":
           e.preventDefault();
@@ -264,22 +260,9 @@ export default function Dashboard() {
       }
     };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (!activeKeys.has(e.key)) return;
-      activeKeys.delete(e.key);
-      // Stop when all arrow keys released
-      if (activeKeys.size === 0) {
-        safeCall(() => api.stop());
-      }
-    };
-
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [speed, safeCall]);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [distanceMm, speed, turnDeg, safeCall]);
 
   // --- Auto-scroll chat ---
   useEffect(() => {

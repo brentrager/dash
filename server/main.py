@@ -286,12 +286,21 @@ Each command object has:
 
 Available commands and their arguments:
 
-Movement:
-- drive: {speed: int} — drive forward (positive) or backward (negative), range -2048 to 2048
-- spin: {speed: int} — spin in place, positive=clockwise, negative=counter-clockwise
-- move: {distance_mm: int, speed_mmps?: int} — move a specific distance in mm
-- turn: {degrees: int, speed_dps?: float} — turn specific degrees, positive=clockwise
+Movement (continuous — keeps going until stop):
+- drive: {speed: int} — forward/backward, -2048 to 2048
+- spin: {speed: int} — rotate in place, positive=CW
+- drive_and_spin: {linear: int, rotational: int} — arc/circle
 - stop: {} — stop all movement
+
+Movement (one-shot — blocks then auto-stops):
+- move: {distance_mm: int, speed_mmps?: int} — move distance
+- turn: {degrees: int} — turn degrees, positive=CW
+
+RULES:
+- For circles/arcs use drive_and_spin (NOT drive+turn)
+- Do NOT invent commands like "repeat" or "wait"
+- Do NOT add comments in JSON
+- ONLY use sounds from the list below
 
 Lights:
 - neck_color: {color: string} — set neck LED color (CSS color name or hex)
@@ -317,18 +326,27 @@ Available sounds: """
     + ", ".join(sorted(NOISES.keys()))
     + """
 
-Example response when asked to "dance":
+Example response when asked to "drive in a circle":
 
-Sure! Let me show you my dance moves!
+```commands
+[
+  {"command": "all_lights", "args": {"color": "cyan"}},
+  {"command": "say", "args": {"sound": "wee"}},
+  {"command": "drive_and_spin", "args": {"linear": 200, "rotational": 100}}
+]
+```
+
+(The robot will keep circling until the user says stop.)
+
+Example response when asked to "dance":
 
 ```commands
 [
   {"command": "all_lights", "args": {"color": "magenta"}},
   {"command": "say", "args": {"sound": "wee"}},
-  {"command": "spin", "args": {"speed": 200}},
   {"command": "turn", "args": {"degrees": 180}},
-  {"command": "turn", "args": {"degrees": -180}},
   {"command": "all_lights", "args": {"color": "cyan"}},
+  {"command": "turn", "args": {"degrees": -180}},
   {"command": "stop", "args": {}}
 ]
 ```

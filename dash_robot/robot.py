@@ -162,15 +162,15 @@ class DashRobot:
         """Drive forward (positive) or backward (negative). Range: -2048 to 2048."""
         speed = max(-2048, min(2048, speed))
         if speed < 0:
-            speed = 0x8000 + abs(speed)
-        await self._cmd("drive", bytearray([speed & 0xFF, (speed >> 8) & 0xFF, 0x00]))
+            speed = 0x800 + speed  # two's complement 12-bit
+        await self._cmd("drive", bytearray([speed & 0xFF, 0x00, (speed & 0x0F00) >> 8]))
 
     async def spin(self, speed: int):
         """Spin in place. Positive = clockwise, negative = counter-clockwise."""
         speed = max(-2048, min(2048, speed))
         if speed < 0:
-            speed = 0x8000 + abs(speed)
-        await self._cmd("drive", bytearray([0x00, speed & 0xFF, (speed >> 8) & 0xFF]))
+            speed = 0x800 + speed  # two's complement 12-bit
+        await self._cmd("drive", bytearray([0x00, speed & 0xFF, (speed & 0x0F00) >> 8]))
 
     async def stop(self):
         """Stop all movement."""

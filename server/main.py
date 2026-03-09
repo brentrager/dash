@@ -164,22 +164,45 @@ async def _clap_detection_loop():
             await _terminator_sequence()
 
 
+# ── Pickup detection ─────────────────────────────────────────────────────────
+
+_pickup_task: asyncio.Task | None = None
+_was_picked_up = False
+
+
+async def _pickup_detection_loop():
+    """Background loop: say wee when picked up."""
+    global _was_picked_up
+    while True:
+        await asyncio.sleep(0.2)
+        if robot is None or not _is_connected():
+            continue
+        picked_up = bool(robot.state.get("picked_up", False))
+        if picked_up and not _was_picked_up:
+            log.info("Picked up — wee!")
+            try:
+                await robot.say("wee")
+            except Exception:
+                pass
+        _was_picked_up = picked_up
+
+
 # ── Lifespan ─────────────────────────────────────────────────────────────────
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _avoidance_task, _clap_task
+    global _avoidance_task, _clap_task, _pickup_task
     if NO_ROBOT:
         _init_mock_state()
         log.info("Running in NO_ROBOT mode — mock data enabled")
     _avoidance_task = asyncio.create_task(_collision_avoidance_loop())
     _clap_task = asyncio.create_task(_clap_detection_loop())
+    _pickup_task = asyncio.create_task(_pickup_detection_loop())
     yield
-    if _avoidance_task:
-        _avoidance_task.cancel()
-    if _clap_task:
-        _clap_task.cancel()
+    for task in (_avoidance_task, _clap_task, _pickup_task):
+        if task:
+            task.cancel()
     global robot
     if robot is not None:
         await robot.disconnect()

@@ -397,6 +397,13 @@ export default function Dashboard() {
       const transcript = event.results[0]?.[0]?.transcript ?? "";
       if (transcript.trim()) {
         setChatInput(transcript.trim());
+        // Auto-send after a short delay to let state update
+        setTimeout(() => {
+          const form = document.getElementById("chat-form");
+          form?.dispatchEvent(
+            new Event("submit", { bubbles: true, cancelable: true })
+          );
+        }, 100);
       }
       setListening(false);
     };
@@ -810,16 +817,23 @@ export default function Dashboard() {
           <div ref={chatEndRef} />
         </div>
 
-        <div className="flex gap-2 mt-2">
+        <form
+          id="chat-form"
+          className="flex gap-2 mt-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleChat();
+          }}
+        >
           <input
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleChat()}
             placeholder="Tell Dash what to do..."
             className="flex-1 bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-neon-yellow transition-colors"
           />
           <button
+            type="button"
             onClick={toggleMic}
             className={`neon-btn px-3 py-2.5 rounded-xl text-sm font-bold border ${
               listening
@@ -831,13 +845,13 @@ export default function Dashboard() {
             {listening ? "..." : "Mic"}
           </button>
           <button
-            onClick={handleChat}
+            type="submit"
             disabled={chatLoading || !chatInput.trim()}
             className="neon-btn px-5 py-2.5 bg-yellow-900/40 text-neon-yellow border border-yellow-700 rounded-xl text-sm font-bold disabled:opacity-30"
           >
             Send
           </button>
-        </div>
+        </form>
       </Card>
     </div>
   );

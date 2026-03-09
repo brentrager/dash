@@ -170,7 +170,7 @@ class DashRobot:
         speed = max(-2048, min(2048, speed))
         if speed < 0:
             speed = 0x800 + speed  # two's complement 12-bit
-        await self._cmd("drive", bytearray([0x00, speed & 0xFF, (speed & 0x0F00) >> 8]))
+        await self._cmd("drive", bytearray([0x00, speed & 0xFF, (speed & 0xFF00) >> 5]))
 
     async def stop(self):
         """Stop all movement."""

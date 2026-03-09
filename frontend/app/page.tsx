@@ -240,12 +240,12 @@ export default function Dashboard() {
         case "ArrowUp":
           e.preventDefault();
           activeKeys.add(e.key);
-          safeCall(() => api.drive(speed));
+          safeCall(() => api.drive(-speed));
           break;
         case "ArrowDown":
           e.preventDefault();
           activeKeys.add(e.key);
-          safeCall(() => api.drive(-speed));
+          safeCall(() => api.drive(speed));
           break;
         case "ArrowLeft":
           e.preventDefault();

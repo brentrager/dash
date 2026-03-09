@@ -160,7 +160,7 @@ class DashRobot:
 
     @staticmethod
     def _encode_speed(speed: int) -> int:
-        speed = max(-2048, min(2048, speed))
+        speed = max(-2047, min(2047, speed))
         if speed < 0:
             speed = 0x800 + speed  # two's complement 12-bit
         return speed

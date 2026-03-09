@@ -29,5 +29,5 @@ tmux select-layout -t "$SESSION" even-vertical
 # Select top pane
 tmux select-pane -t "$SESSION:0.0"
 
-# Attach
-tmux attach -t "$SESSION"
+# Attach — use exec so tmux gets the real TTY
+exec tmux attach -t "$SESSION"

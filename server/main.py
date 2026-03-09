@@ -418,8 +418,8 @@ Each command object has:
 Available commands and their arguments:
 
 Movement (continuous — keeps going until stop):
-- drive: {speed: int} — forward/backward, -2048 to 2048
-- spin: {speed: int} — rotate in place, positive=CW
+- drive: {speed: int} — forward/backward, -2047 to 2047 (200=normal, 500=fast)
+- spin: {speed: int} — rotate in place, positive=CW, same range
 - drive_and_spin: {linear: int, rotational: int} — arc/circle
 - stop: {} — stop all movement
 
